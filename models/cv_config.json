@@ -1,0 +1,5 @@
+{
+  "n_splits": 5,
+  "test_size": 30,
+  "strategy": "walk_forward_expanding"
+}

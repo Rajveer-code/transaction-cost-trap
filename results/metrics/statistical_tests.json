@@ -1,0 +1,61 @@
+{
+  "accuracy_vs_random": {
+    "test": "One-sample t-test (vs 50%)",
+    "accuracy": 0.6133333333333333,
+    "t_statistic": 2.8407573899799385,
+    "p_value": 0.00513082843376657,
+    "cohen_d": 0.2327239132321922,
+    "significant": true,
+    "n_samples": 150
+  },
+  "mcnemar_test": {
+    "test": "McNemar's test",
+    "model1": "CatBoost",
+    "model2": "Baseline",
+    "chi2_statistic": 3.2142857142857144,
+    "p_value": 0.07299804543011579,
+    "significant": false,
+    "contingency_table": [
+      [
+        49,
+        27
+      ],
+      [
+        43,
+        31
+      ]
+    ],
+    "interpretation": {
+      "both_correct": 49,
+      "only_model1_correct": 43,
+      "only_model2_correct": 27,
+      "both_wrong": 31
+    }
+  },
+  "bootstrap_ci": {
+    "test": "Bootstrap confidence intervals",
+    "n_iterations": 1000,
+    "confidence_level": 0.95,
+    "accuracy": {
+      "mean": 0.6134933333333333,
+      "lower": 0.5333333333333333,
+      "upper": 0.6934999999999999,
+      "ci": "[0.5333, 0.6935]"
+    },
+    "f1_score": {
+      "mean": 0.6320674682365756,
+      "lower": 0.5408720040795513,
+      "upper": 0.7195368126041508,
+      "ci": "[0.5409, 0.7195]"
+    }
+  },
+  "permutation_test": {
+    "test": "Permutation test",
+    "true_accuracy": 0.6133333333333333,
+    "n_permutations": 1000,
+    "p_value": 0.000999000999000999,
+    "significant": true,
+    "permutation_mean": 0.49820000000000003,
+    "permutation_std": 0.039821323154533406
+  }
+}

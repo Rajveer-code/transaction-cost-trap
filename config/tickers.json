@@ -1,0 +1,108 @@
+﻿{
+    "AAPL": {
+        "company_name": "Apple Inc",
+        "short_name": "Apple",
+        "sector": "Technology",
+        "ceo": "Tim Cook",
+        "competitors": [
+            "Samsung",
+            "Google",
+            "Microsoft"
+        ]
+    },
+    "MSFT": {
+        "company_name": "Microsoft Corporation",
+        "short_name": "Microsoft",
+        "sector": "Technology",
+        "ceo": "Satya Nadella",
+        "competitors": [
+            "Google",
+            "Amazon",
+            "Apple"
+        ]
+    },
+    "GOOGL": {
+        "company_name": "Alphabet Inc",
+        "short_name": "Google",
+        "sector": "Technology",
+        "ceo": "Sundar Pichai",
+        "competitors": [
+            "Microsoft",
+            "Meta",
+            "Amazon"
+        ]
+    },
+    "AMZN": {
+        "company_name": "Amazon.com Inc",
+        "short_name": "Amazon",
+        "sector": "Consumer Cyclical",
+        "ceo": "Andy Jassy",
+        "competitors": [
+            "Walmart",
+            "Alibaba"
+        ]
+    },
+    "TSLA": {
+        "company_name": "Tesla Inc",
+        "short_name": "Tesla",
+        "sector": "Automotive",
+        "ceo": "Elon Musk",
+        "competitors": [
+            "Ford",
+            "Chevrolet",
+            "BYD"
+        ]
+    },
+    "NVDA": {
+        "company_name": "NVIDIA Corporation",
+        "short_name": "NVIDIA",
+        "sector": "Technology",
+        "ceo": "Jensen Huang",
+        "competitors": [
+            "AMD",
+            "Intel"
+        ]
+    },
+    "META": {
+        "company_name": "Meta Platforms Inc",
+        "short_name": "Meta",
+        "sector": "Technology",
+        "ceo": "Mark Zuckerberg",
+        "competitors": [
+            "Google",
+            "TikTok",
+            "Snapchat"
+        ]
+    },
+    "JPM": {
+        "company_name": "JPMorgan Chase & Co.",
+        "short_name": "JPMorgan",
+        "sector": "Financial Services",
+        "ceo": "Jamie Dimon",
+        "competitors": [
+            "Goldman Sachs",
+            "Bank of America"
+        ]
+    },
+    "V": {
+        "company_name": "Visa Inc",
+        "short_name": "Visa",
+        "sector": "Financial Services",
+        "ceo": "Ryan McInerney",
+        "competitors": [
+            "Mastercard",
+            "American Express"
+        ]
+    },
+    "WMT": {
+        "company_name": "Walmart Inc",
+        "short_name": "Walmart",
+        "sector": "Consumer Defensive",
+        "ceo": "Doug McMillon",
+        "competitors": [
+            "Target",
+            "Costco",
+            "Amazon"
+        ]
+    }
+}

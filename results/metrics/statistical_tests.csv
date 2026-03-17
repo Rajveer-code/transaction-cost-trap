@@ -1,0 +1,5 @@
+test,statistic,p_value,significant
+One-sample t-test (vs 50%),2.8407573899799385,0.00513082843376657,✅
+McNemar's test,3.2142857142857144,0.07299804543011579,❌
+Bootstrap confidence intervals,N/A,N/A,❌
+Permutation test,N/A,0.000999000999000999,✅

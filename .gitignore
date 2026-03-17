@@ -1,0 +1,28 @@
+﻿# Virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# API Keys - NEVER commit these
+config/api_keys.json
+
+# Large model files
+*.pkl
+*.pth
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Test outputs
+outputs_test_run/
+outputs_paper_replication/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

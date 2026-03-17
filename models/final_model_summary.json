@@ -1,0 +1,37 @@
+{
+  "best_model_name": "CatBoost",
+  "best_f1_score": 0.6082691476651669,
+  "best_accuracy": NaN,
+  "all_models_sorted": [
+    {
+      "model": "CatBoost",
+      "accuracy": NaN,
+      "f1": 0.6082691476651669
+    },
+    {
+      "model": "XGBoost",
+      "accuracy": NaN,
+      "f1": 0.5762941163926386
+    },
+    {
+      "model": "LightGBM",
+      "accuracy": NaN,
+      "f1": 0.5434620427881297
+    },
+    {
+      "model": "Random Forest",
+      "accuracy": 0.5199999999999999,
+      "f1": 0.5012531328320803
+    },
+    {
+      "model": "Stacking Ensemble",
+      "accuracy": NaN,
+      "f1": 0.4633711577757489
+    },
+    {
+      "model": "Logistic Regression",
+      "accuracy": 0.5066666666666666,
+      "f1": 0.3638357588357588
+    }
+  ]
+}
