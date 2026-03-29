@@ -49,8 +49,8 @@ class StockPredictionPipeline:
     Complete modeling pipeline for stock movement prediction.
     """
     
-    def __init__(self, data_dir='data/combined', output_dir='results',
-                 figures_dir='research_outputs/figures'):
+    def __init__(self, data_dir='data/combined', output_dir='outputs',
+                 figures_dir='outputs/figures'):
         """
         Initialize pipeline.
         

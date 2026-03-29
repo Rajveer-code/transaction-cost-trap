@@ -1,28 +1,21 @@
-﻿# Virtual environment
-venv/
+# Large data files - DO NOT COMMIT
+data/raw/*.parquet
+results/predictions/*.parquet
 
-# Python cache
+# Python runtime elements
 __pycache__/
 *.pyc
-*.pyo
 
-# API Keys - NEVER commit these
-config/api_keys.json
+# IDEs & Environments
+.env
+.idea/
+.vscode/
 
-# Large model files
-*.pkl
-*.pth
+# Build artifacts
+*.egg-info/
+dist/
+build/
 
-# Jupyter checkpoints
-.ipynb_checkpoints/
-
-# Test outputs
-outputs_test_run/
-outputs_paper_replication/
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
+# Explicitly KEEP empty directory layouts via ! override
+!data/raw/.gitkeep
+!results/**/.gitkeep

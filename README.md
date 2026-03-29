@@ -1,4 +1,4 @@
-﻿# The Transaction Cost Trap
+# The Transaction Cost Trap
 
 **Why Machine Learning Stock Prediction Fails Economically Under Realistic Market Frictions**
 
@@ -22,19 +22,38 @@ At zero cost the strategy earns **+4.61% annually** (Sharpe 0.31), confirming th
 ## Replication
 
 ### Requirements
-`\ash
+
+```bash
 pip install -r requirements.txt
-`\
+```
 
 ### Step 1 — Run the full modeling pipeline
-`\ash
-python run_pipeline.py --data data/combined/all_features.parquet --output outputs/ --verbose
-`\
+
+```bash
+python run_pipeline.py
+```
+
+This will:
+1. Load the combined dataset (`data/combined/all_features.parquet`)
+2. Run baseline models (random, logistic regression, technical-only)
+3. Run per-ticker CatBoost with walk-forward validation
+4. Evaluate cross-ticker generalization
+5. Run ablation studies (full vs. technical-only vs. rolling-returns)
+6. Run backtest simulation
+
+Results are saved to `outputs/`.
+
+For verbose logging:
+
+```bash
+python run_pipeline.py --verbose
+```
 
 ### Step 2 — Reproduce transaction cost sensitivity table
-`\ash
+
+```bash
 python scripts/transaction_cost_sensitivity.py
-`\
+```
 
 This reproduces Table 4 from the paper exactly.
 
@@ -42,23 +61,34 @@ This reproduces Table 4 from the paper exactly.
 
 ## Repository Structure
 
-`\
-├── src/                        # Core pipeline modules
-│   ├── data_collection/        # News and price data scrapers
-│   ├── feature_engineering/    # 47 technical features
-│   ├── modeling/               # CatBoost, RF, DNN trainers
-│   ├── evaluation/             # Walk-forward CV, backtesting, SHAP
-│   └── utils/                  # Helpers
-├── scripts/                    # Analysis and figure scripts
+```
+├── run_pipeline.py                  # Main entry point
+├── requirements.txt                 # Python dependencies
+├── FEATURE_SCHEMA.py                # 42-feature schema documentation
+│
+├── src/
+│   ├── models/
+│   │   └── catboost_trainer.py      # CatBoost, walk-forward, baselines
+│   └── evaluation/
+│       └── metrics.py               # Metrics, bootstrap CI, significance tests
+│
+├── scripts/
+│   ├── train_models.py              # StockPredictionPipeline class
+│   └── transaction_cost_sensitivity.py  # Table 4 reproduction
+│
+├── config/
+│   ├── config.py                    # Project configuration
+│   └── tickers.json                 # Ticker metadata
+│
 ├── data/
-│   └── combined/               # all_features.parquet (17,773 obs)
-├── models/                     # Trained model files
-├── results/                    # Output CSVs and figures
-├── notebooks/                  # Phase notebooks
-├── config/                     # Configuration (no API keys)
-├── run_pipeline.py             # Main entry point
-└── requirements.txt
-`\
+│   ├── combined/                    # all_features.parquet (17,773 obs)
+│   └── extended/                    # Extended 10-year dataset
+│
+├── results/                         # Pre-computed predictions
+├── outputs/                         # Pipeline outputs (generated)
+├── notebooks/                       # Exploration notebooks (phases 3–6)
+└── paper/                           # Manuscript
+```
 
 ---
 
