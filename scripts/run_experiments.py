@@ -22,7 +22,7 @@ warnings.filterwarnings('ignore', category=FutureWarning)
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
-
+import scipy.stats
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -306,7 +306,7 @@ def run_all_experiments(predictions_df: pd.DataFrame, spy_returns: pd.Series) ->
                 
                 shuffled = pred_sorted.copy()
                 rng = np.random.default_rng(i)
-                probs_arr = shuffled['prob'].values
+                probs_arr = shuffled['prob'].values.copy()
                 sizes = shuffled.groupby(level='date').size().values
                 start = 0
                 for size in sizes:
@@ -336,7 +336,7 @@ def run_all_experiments(predictions_df: pd.DataFrame, spy_returns: pd.Series) ->
 
     # Ex 3: Sub-period Matrix Check
     print("\nRunning Experiment 3: Sub-period Analysis...")
-    key_configs = [c for c in STRATEGY_CONFIGS if c.name in ['TopK1', 'TopK1_Trend', 'Equal_Weight', 'BuyHold_SPY', 'Random_Top1']]
+    key_configs = [c for c in STRATEGY_CONFIGS if c.name in ['TopK1', 'TopK1_Trend', 'Equal_Weight', 'Random_Top1']]
     sub_df = run_subperiod_analysis(predictions_df, key_configs)
     
     # Override SPY handling via subperiod isolated bounds specifically mapping BuyHold

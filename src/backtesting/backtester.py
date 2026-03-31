@@ -510,7 +510,7 @@ def run_permutation_test(
         rng = np.random.default_rng(i)
         
         # Shuffle cross-sectional probabilities to break predictive link
-        probs_array = shuffled_df['prob'].values
+        probs_array = shuffled_df['prob'].values.copy()
         
         # Extract sizes per date group
         sizes = shuffled_df.groupby(level='date').size().values

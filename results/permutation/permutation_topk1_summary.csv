@@ -1,0 +1,2 @@
+observed_sharpe,null_mean,null_95th,p_value,percentile_rank,significant
+1.1832473843580822,0.23316722375131813,0.6661821448439529,0.001,99.9,True
