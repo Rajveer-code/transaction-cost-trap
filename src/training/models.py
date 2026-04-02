@@ -32,8 +32,17 @@ import time
 from typing import Any, Dict, Optional, Tuple, Type
 
 import numpy as np
-import torch
-import torch.nn as nn
+
+TORCH_AVAILABLE = True
+try:
+    import torch
+    import torch.nn as nn
+except Exception as e:
+    TORCH_AVAILABLE = False
+    torch = None
+    nn = None
+    print(f"[WARNING] PyTorch unavailable: {e}. DNNModel and EnsembleModel will use fallback (CatBoost+RF).")
+
 from catboost import CatBoostClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
@@ -298,9 +307,10 @@ class RandomForestModel:
 # CLASS 3: DNNModel (PyTorch MLP)
 # ---------------------------------------------------------------------------
 
-class _FinancialMLP(nn.Module):
-    """
-    Private MLP backbone used by DNNModel.
+if TORCH_AVAILABLE:
+    class _FinancialMLP(nn.Module):
+        """
+        Private MLP backbone used by DNNModel.
 
     Architecture:
         Linear(in_features, 256) -> BatchNorm1d(256) -> ReLU -> Dropout(0.3)
@@ -336,9 +346,10 @@ class _FinancialMLP(nn.Module):
         return self.net(x).squeeze(-1)
 
 
-class DNNModel:
-    """
-    PyTorch MLP classifier with early stopping and LR scheduling.
+if TORCH_AVAILABLE:
+    class DNNModel:
+        """
+        PyTorch MLP classifier with early stopping and LR scheduling.
 
     Validation split: last 15% of the training rows (time-ordered, NOT random).
     Early stopping monitors validation BCE loss with patience=15.
@@ -562,6 +573,22 @@ class DNNModel:
         """Return all hyperparameters as a flat dictionary."""
         return dict(self._params)
 
+else:
+    class DNNModel:
+        def __init__(self, *args, **kwargs):
+            self.available = False
+            print("[WARNING] DNNModel is disabled because PyTorch is unavailable.")
+
+        def fit(self, X_train: np.ndarray, y_train: np.ndarray) -> "DNNModel":
+            # no-op to preserve interface; ensemble handles missing DNN.
+            return self
+
+        def predict_proba(self, X: np.ndarray) -> np.ndarray:
+            raise RuntimeError("DNNModel is unavailable due to missing PyTorch.")
+
+        def get_params(self) -> Dict[str, Any]:
+            return {}
+
 
 # ---------------------------------------------------------------------------
 # CLASS 4: EnsembleModel
@@ -571,19 +598,17 @@ class EnsembleModel:
     """
     Equal-weight average ensemble of CatBoostModel, RandomForestModel, DNNModel.
 
-    All three component models are fitted on identical (X_train, y_train).
-    predict_proba returns the arithmetric mean of the three calibrated
-    probability outputs.
+    All component models are fitted on identical (X_train, y_train).
+    predict_proba returns a weighted mean of the calibrated probability outputs.
 
-    This simple averaging strategy is justified by the diversity of the
-    base learners (gradient boosting, bagging, deep network), which reduces
-    variance while preserving each model's individual bias.
+    The ensemble gracefully degrades to CatBoost+RandomForest when DNN is unavailable.
     """
 
     def __init__(self) -> None:
         self.catboost = CatBoostModel()
         self.rf = RandomForestModel()
         self.dnn = DNNModel()
+        self.dnn_available = getattr(self.dnn, "available", True)
         self._fitted = False
 
     # ── fit ─────────────────────────────────────────────────────────────────
@@ -605,8 +630,13 @@ class EnsembleModel:
         print("  Ensemble: CatBoost OK", end="  ")
         self.rf.fit(X_train, y_train)
         print("RF OK", end="  ")
-        self.dnn.fit(X_train, y_train)
-        print("DNN OK")
+
+        if self.dnn_available:
+            self.dnn.fit(X_train, y_train)
+            print("DNN OK")
+        else:
+            print("DNN skipped (PyTorch unavailable)")
+
         self._fitted = True
         return self
 
@@ -638,14 +668,19 @@ class EnsembleModel:
 
         p_cb = self.catboost.predict_proba(X)
         p_rf = self.rf.predict_proba(X)
-        p_dnn = self.dnn.predict_proba(X)
 
-        assert p_cb.shape == p_rf.shape == p_dnn.shape, (
-            f"Component prediction shape mismatch: CB={p_cb.shape}, "
-            f"RF={p_rf.shape}, DNN={p_dnn.shape}"
-        )
-
-        ensemble = (p_cb + p_rf + p_dnn) / 3.0
+        if self.dnn_available:
+            p_dnn = self.dnn.predict_proba(X)
+            assert p_cb.shape == p_rf.shape == p_dnn.shape, (
+                f"Component prediction shape mismatch: CB={p_cb.shape}, "
+                f"RF={p_rf.shape}, DNN={p_dnn.shape}"
+            )
+            ensemble = (p_cb + p_rf + p_dnn) / 3.0
+        else:
+            assert p_cb.shape == p_rf.shape, (
+                f"Component prediction shape mismatch: CB={p_cb.shape}, RF={p_rf.shape}"
+            )
+            ensemble = (p_cb + p_rf) / 2.0
 
         assert ensemble.shape == (len(X),), (
             f"Ensemble output shape {ensemble.shape} != ({len(X)},)"
@@ -660,11 +695,15 @@ class EnsembleModel:
 
     def get_params(self) -> Dict[str, Any]:
         """Return nested dict of all component hyperparameters."""
-        return {
+        params = {
             "catboost": self.catboost.get_params(),
             "random_forest": self.rf.get_params(),
-            "dnn": self.dnn.get_params(),
         }
+        if self.dnn is not None:
+            params["dnn"] = self.dnn.get_params()
+        else:
+            params["dnn"] = None
+        return params
 
 
 # ---------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-# Overcoming the Transaction Cost Trap: Cross-Sectional Conviction Ranking in Machine Learning Equity Prediction
+﻿# Overcoming the Transaction Cost Trap: Cross-Sectional Conviction Ranking in Machine Learning Equity Prediction
 
 A publication-grade implementation of a cross-sectional equity ranking methodology designed to bypass the transaction cost trap routinely observed in financial machine learning classification architectures.
 
@@ -78,6 +78,12 @@ Execute the entire data ingestion, calibration, and backtesting pipeline determi
 
 ```bash
 python scripts/run_experiments.py
+```
+
+For NASDAQ-100 parquet data (external dataset):
+
+```bash
+python scripts/run_experiments.py --data-path data/nasdaq100_prices.parquet --use-cache
 ```
 
 Expected runtime on modern hardware is between 30 and 90 minutes. 

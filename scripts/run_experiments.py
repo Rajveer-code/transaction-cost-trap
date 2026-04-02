@@ -20,6 +20,7 @@ import warnings
 warnings.filterwarnings('ignore', category=FutureWarning)
 
 import sys
+import argparse
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 import scipy.stats
@@ -403,6 +404,17 @@ def run_all_experiments(predictions_df: pd.DataFrame, spy_returns: pd.Series) ->
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run end-to-end experiments.")
+    parser.add_argument("--data-path", type=str, default=None,
+                        help="Optional path to external OHLCV parquet dataset (MultiIndex date,ticker).")
+    parser.add_argument("--start", type=str, default=None,
+                        help="Start date (YYYY-MM-DD) for data loading. If omitted, use default in data_loader.")
+    parser.add_argument("--end", type=str, default=None,
+                        help="End date (YYYY-MM-DD) for data loading. If omitted, use default in data_loader.")
+    parser.add_argument("--use-cache", action="store_true", default=False,
+                        help="Enable cache for yfinance downloads. Default: False.")
+    args = parser.parse_args()
+
     # Step 0
     dirs_to_make = [
         "predictions",
@@ -415,7 +427,12 @@ if __name__ == "__main__":
 
     # Step 1
     print("Step 1/5: Loading data...")
-    df = load_all_data(use_cache=True)
+    df = load_all_data(
+        start=args.start,
+        end=args.end,
+        use_cache=args.use_cache,
+        external_data_path=args.data_path,
+    )
     feature_cols = get_feature_columns(df)
     print(f"  Loaded: {len(df)} rows, {len(feature_cols)} features")
     print(f"  Date range: {df.index.get_level_values('date').min().date()} to {df.index.get_level_values('date').max().date()}")
