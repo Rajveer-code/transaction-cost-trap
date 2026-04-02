@@ -1,4 +1,4 @@
-﻿# Overcoming the Transaction Cost Trap: Cross-Sectional Conviction Ranking in Machine Learning Equity Prediction
+# Overcoming the Transaction Cost Trap: Cross-Sectional Conviction Ranking in Machine Learning Equity Prediction
 
 A publication-grade implementation of a cross-sectional equity ranking methodology designed to bypass the transaction cost trap routinely observed in financial machine learning classification architectures.
 
@@ -89,6 +89,23 @@ python scripts/run_experiments.py --data-path data/nasdaq100_prices.parquet --us
 Expected runtime on modern hardware is between 30 and 90 minutes. 
 The script automatically builds stateful `.parquet` checkpoints directly in `results/predictions/` after each successfully tested walk-forward fold. If the execution is manually interrupted, subsequent executions will instantly reload the validation cache and resume processing at the next structural fold boundary.
 
+## Final run results (example)
+
+- IC Significance: mean IC = 0.0197, std = 0.4169, ICIR = 0.0472, t-stat = 1.8335, p = 0.0335 (one-tailed) -> PASS
+- Strategy comparison (NASDQ-100 test):
+  - Baseline_P50: ann. return = 39.5%, Sharpe = 1.21, max DD = -43.5%
+  - Equal_Weight: ann. return = 38.6%, Sharpe = 1.20, max DD = -49.4%
+  - TopK1: ann. return = 45.8%, Sharpe = 1.18, max DD = -39.2%
+  - Momentum_Top1: ann. return = 60.3%, Sharpe = 1.18, max DD = -61.2%
+  - TopK3: ann. return = 36.1%, Sharpe = 1.11, max DD = -41.1%
+- Cost sensitivity (TopK1) break-even: 24.2 bps
+- K sensitivity:
+  - TopK1: ann. 45.8%, Sharpe 1.18, max DD -39.2%, n_trades 596
+  - TopK2: ann. 28.2%, Sharpe 0.82, max DD -42.7%, n_trades 829
+  - TopK3: ann. 36.1%, Sharpe 1.11, max DD -41.1%, n_trades 908
+
+Always include final metrics in the publication appendix to match results in `results/metrics/*.csv` and `results/plots/reliability_diagrams`.
+
 ## Experimental Design
 
 | Experiment | Research Question | Null Hypothesis | Key Metric | Baseline |
@@ -137,6 +154,8 @@ Implementation handles immense strategic combinatorics by applying Benjamini-Hoc
 
 | Strategy | Type | Description | Null Baseline |
 |---|---|---|---|
+
+
 | Baseline_P50 | Threshold | Capital distributed linearly if P > 0.50 | - |
 | Threshold_P60 | Threshold | Capital distributed linearly if P > 0.60 | Baseline_P50 |
 | TopK1 | Ranking | 100% allocation specifically to maximum conviction probability | Random_Top1 |
