@@ -1,4 +1,4 @@
-# Overcoming the Transaction Cost Trap: Cross-Sectional Conviction Ranking in Machine Learning Equity Prediction
+﻿# Overcoming the Transaction Cost Trap: Cross-Sectional Conviction Ranking in Machine Learning Equity Prediction
 
 A publication-grade implementation of a cross-sectional equity ranking methodology designed to bypass the transaction cost trap routinely observed in financial machine learning classification architectures.
 

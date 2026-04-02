@@ -180,6 +180,52 @@ def _download_ohlcv(
     return raw
 
 
+def _load_data_from_parquet(path: str | Path) -> pd.DataFrame:
+    """
+    Load raw OHLCV data from an external parquet file into canonical format.
+
+    Expected format: MultiIndex [date, ticker] or columns [date, ticker].
+    Must include Open, High, Low, Close, Volume.
+    """
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"External data file not found: {path}")
+
+    df = pd.read_parquet(path)
+
+    if isinstance(df.index, pd.MultiIndex) and df.index.names == ["date", "ticker"]:
+        # Already correct structure.
+        df = df.copy()
+    else:
+        # Try to infer index from columns.
+        if "date" in df.columns and "ticker" in df.columns:
+            df = df.copy()
+            df["date"] = pd.to_datetime(df["date"]).dt.normalize()
+            df = df.set_index(["date", "ticker"]).sort_index()
+        else:
+            raise ValueError(
+                "External data must have a MultiIndex (date,ticker) or columns 'date' and 'ticker'."
+            )
+
+    # Ensure index dtypes
+    df = df.sort_index()
+    if df.index.names != ["date", "ticker"]:
+        df.index.names = ["date", "ticker"]
+
+    # Validate required columns
+    required = {"Open", "High", "Low", "Close", "Volume"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"External data missing required columns: {sorted(missing)}")
+
+    # Normalize date level
+    df = df.reset_index()
+    df["date"] = pd.to_datetime(df["date"]).dt.normalize()
+    df = df.set_index(["date", "ticker"]).sort_index()
+
+    return df
+
+
 # ---------------------------------------------------------------------------
 # FEATURE ENGINEERING — all strictly causal (no center=True)
 # ---------------------------------------------------------------------------
@@ -581,95 +627,108 @@ def _compute_target(close: pd.Series) -> pd.Series:
 # ---------------------------------------------------------------------------
 
 def load_all_data(
-    tickers: List[str] = TICKERS,
-    start: str = START_DATE,
-    end: str = END_DATE,
+    tickers: Optional[List[str]] = None,
+    start: Optional[str] = None,
+    end: Optional[str] = None,
     use_cache: bool = True,
     drop_na_features: bool = True,
+    external_data_path: Optional[Path | str] = None,
 ) -> pd.DataFrame:
     """
     Load and process all data into a clean MultiIndex DataFrame.
 
+    Supports two modes:
+      - built-in downloader (default) for original 7-stock universe
+      - external parquet source for NASDAQ-100 dataset via external_data_path
+
     Steps:
-      1. Download (or load from cache) OHLCV for each ticker.
+      1. Load raw OHLCV (download or external parquet).
       2. Compute 47 causal technical features per ticker.
       3. Compute the 2-day-forward target label per ticker.
       4. Stack into a (date, ticker) MultiIndex DataFrame.
       5. Optionally drop rows with NaN in feature columns (warm-up period).
-
-    Parameters
-    ----------
-    tickers : list of str
-        Ticker symbols to process.
-    start, end : str
-        Date range in 'YYYY-MM-DD'.
-    use_cache : bool
-        Read/write Parquet cache for raw OHLCV. Strongly recommended.
-    drop_na_features : bool
-        If True (default), drop rows where ANY feature is NaN.
-        This removes the warm-up period (first ~200 rows per ticker).
-        Set to False only for debugging/auditing purposes.
-
-    Returns
-    -------
-    pd.DataFrame
-        MultiIndex DataFrame with index levels (date, ticker).
-        Columns: 47 feature columns + 'target' + 'Close' (for backtester).
-        'SMA_200' is retained as both a feature AND a backtester filter signal.
-
-    Example
-    -------
-    >>> df = load_all_data()
-    >>> df.loc[("2020-01-15", "AAPL")]  # features for one stock on one date
     """
+    if start is None:
+        start = START_DATE
+    if end is None:
+        end = END_DATE
+    if tickers is None:
+        tickers = TICKERS[:]
+
     print("=" * 60)
     print("DATA LOADER — Financial Conviction Ranking Pipeline")
     print("=" * 60)
-    print(f"Tickers  : {tickers}")
-    print(f"Period   : {start} → {end}")
-    print(f"Cache    : {'enabled' if use_cache else 'disabled'}")
+    source = "external parquet" if external_data_path else "downloaded yfinance"
+    print(f"Data Source: {source}")
+    print(f"Tickers    : {tickers if external_data_path is None else 'from file'}")
+    print(f"Period     : {start} -> {end}")
+    print(f"Cache      : {'enabled' if use_cache else 'disabled'}")
+    print(f"Drop NaN   : {'enabled' if drop_na_features else 'disabled'}")
+    print(f"External   : {external_data_path if external_data_path else 'none'}")
     print()
 
-    # Step 1: Download raw OHLCV
-    print("Step 1/4: Downloading OHLCV data …")
-    raw = _download_ohlcv(tickers, start, end, use_cache=use_cache)
+    if external_data_path:
+        raw_df = _load_data_from_parquet(external_data_path)
 
-    # Step 2 & 3: Feature engineering and target per ticker
+        # Optionally filter by tickers list (subset) if provided.
+        available_tickers = sorted(raw_df.index.get_level_values("ticker").unique())
+        print(f"Loaded from parquet: {len(raw_df)} rows, {len(available_tickers)} tickers")
+
+        raw_df = raw_df.loc[
+            (raw_df.index.get_level_values("date") >= pd.to_datetime(start))
+            & (raw_df.index.get_level_values("date") <= pd.to_datetime(end))
+        ]
+
+        if tickers != TICKERS:
+            requested_tickers = tickers
+            missing = [t for t in requested_tickers if t not in available_tickers]
+            if missing:
+                print(f"  [WARN] Requested tickers not found and will be skipped: {missing}")
+            tickers = [t for t in requested_tickers if t in available_tickers]
+            if not tickers:
+                raise ValueError("No requested tickers found in external dataset.")
+        else:
+            tickers = available_tickers
+
+        raw = {ticker: raw_df.xs(ticker, level="ticker").sort_index() for ticker in tickers}
+
+    else:
+        print("Step 1/4: Downloading OHLCV data …")
+        raw = _download_ohlcv(tickers, start, end, use_cache=use_cache)
+
     print("\nStep 2/4: Engineering features and building target labels …")
     ticker_frames: List[pd.DataFrame] = []
 
     for ticker in tickers:
+        if ticker not in raw:
+            print(f"  [SKIP] {ticker}: no data")
+            continue
+
         ohlcv = raw[ticker].copy()
         print(f"  Processing {ticker} ({len(ohlcv)} raw rows) …")
 
-        # Features
         feat_df = _compute_features_single_ticker(ohlcv)
-
-        # Target label
         target = _compute_target(ohlcv["Close"])
         target.name = "target"
-
-        # Keep Close for backtester (actual price needed for cost calculation)
         close_series = ohlcv["Close"].rename("Close")
 
-        # Combine
         combined = pd.concat([feat_df, close_series, target], axis=1)
         combined["ticker"] = ticker
         combined.index.name = "date"
         ticker_frames.append(combined)
 
-    # Step 4: Stack into MultiIndex
     print("\nStep 3/4: Building MultiIndex DataFrame …")
+    if not ticker_frames:
+        raise ValueError("No ticker data available after processing - cannot build dataset.")
+
     all_data = pd.concat(ticker_frames, axis=0)
     all_data = all_data.reset_index().set_index(["date", "ticker"])
     all_data.sort_index(inplace=True)
 
     print(f"  Combined shape (before NaN drop): {all_data.shape}")
     nan_counts = all_data[get_feature_columns(all_data)].isna().sum()
-    print(f"  Features with NaN values: {(nan_counts > 0).sum()} "
-          f"(expected — warm-up period for long windows)")
+    print(f"  Features with NaN values: {(nan_counts > 0).sum()} (expected — warm-up period)")
 
-    # Step 5: Drop warm-up NaN rows
     if drop_na_features:
         feature_cols = get_feature_columns(all_data)
         before = len(all_data)
@@ -683,7 +742,7 @@ def load_all_data(
     print(f"  Dropped {before_target - len(all_data)} NaN target rows (last 2 dates per ticker)")
 
     print(f"\nStep 4/4: Final dataset shape: {all_data.shape}")
-    print(f"  Date range  : {all_data.index.get_level_values('date').min()} → "
+    print(f"  Date range  : {all_data.index.get_level_values('date').min()} -> "
           f"{all_data.index.get_level_values('date').max()}")
     print(f"  Unique dates: {all_data.index.get_level_values('date').nunique()}")
     print(f"  Tickers     : {all_data.index.get_level_values('ticker').unique().tolist()}")
@@ -717,7 +776,10 @@ def get_feature_columns(df: pd.DataFrame) -> List[str]:
 # DATA INTEGRITY AUDIT
 # ---------------------------------------------------------------------------
 
-def run_data_integrity_audit(df: pd.DataFrame) -> bool:
+def run_data_integrity_audit(
+    df: pd.DataFrame,
+    raw_data_path: Optional[Path | str] = None,
+) -> bool:
     """
     Run a comprehensive integrity audit on the loaded dataset.
 
@@ -785,20 +847,29 @@ def run_data_integrity_audit(df: pd.DataFrame) -> bool:
     )
 
     # ── (c) Target label has correct 2-day shift ────────────────────────────
-    # Spot-check: for each ticker, reconstruct target from Close and compare
+    # Recompute from raw Close series and compare to stored target values.
     target_correct = True
-    for ticker in df.index.get_level_values("ticker").unique():
-        tk_df = df.xs(ticker, level="ticker").sort_index()
-        close = tk_df["Close"]
-        f_t2 = close.shift(-2)
-        f_t1 = close.shift(-1)
-        missing = f_t2.isna() | f_t1.isna()
-        expected_target = (f_t2 > f_t1).astype(float).where(~missing, other=np.nan)
+    audit_tickers = df.index.get_level_values("ticker").unique()
 
-        # Compare where both are not NaN
-        valid_mask = ~(expected_target.isna() | tk_df["target"].isna())
+    for ticker in audit_tickers:
+        # Use raw close price to avoid shift distortions from NaN row drops.
+        if raw_data_path:
+            raw_df = _load_data_from_parquet(raw_data_path)
+            raw_close = raw_df.xs(ticker, level="ticker")["Close"].sort_index()
+        else:
+            raw_download = _download_ohlcv([ticker], START_DATE, END_DATE, use_cache=True)
+            raw_close = raw_download[ticker]["Close"].sort_index()
+
+        expected_target_full = _compute_target(raw_close)
+
+        observed = df.xs(ticker, level="ticker")["target"].sort_index()
+        common_index = observed.index.intersection(expected_target_full.index)
+
         if not np.allclose(
-            expected_target[valid_mask].values, tk_df["target"][valid_mask].values, atol=1e-6
+            observed.loc[common_index].values,
+            expected_target_full.loc[common_index].values,
+            equal_nan=True,
+            atol=1e-6,
         ):
             target_correct = False
             break
@@ -806,20 +877,27 @@ def run_data_integrity_audit(df: pd.DataFrame) -> bool:
     check(
         "Target label = 1{Close(t+2) > Close(t+1)} — 2-day forward shift confirmed",
         target_correct,
-        "Spot-checked all 7 tickers",
+        f"Checked {len(audit_tickers)} tickers",
     )
 
     # ── (d) SMA(200) correctness via raw load ──────────────────────────────
-    # We reload one ticker without dropping NaN to check that first 199 rows are NaN
-    print("  [Reloading AAPL raw for SMA audit …]")
-    raw_one = _download_ohlcv(["AAPL"], START_DATE, END_DATE, use_cache=True)
-    feat_raw = _compute_features_single_ticker(raw_one["AAPL"])
-    sma200_nan_count = feat_raw["SMA_200"].isna().sum()
-    check(
-        "SMA(200) has exactly 199 NaN rows (200-day warm-up, strictly causal)",
-        sma200_nan_count == 199,
-        f"Actual NaN count in AAPL SMA_200: {sma200_nan_count} (expected 199)",
-    )
+    audit_ticker = df.index.get_level_values("ticker").unique()[0]
+    print(f"  [Reloading {audit_ticker} raw for SMA audit …]")
+    try:
+        raw_one = _download_ohlcv([audit_ticker], START_DATE, END_DATE, use_cache=True)
+        feat_raw = _compute_features_single_ticker(raw_one[audit_ticker])
+        sma200_nan_count = feat_raw["SMA_200"].isna().sum()
+        check(
+            "SMA(200) has exactly 199 NaN rows (200-day warm-up, strictly causal)",
+            sma200_nan_count == 199,
+            f"Actual NaN count in {audit_ticker} SMA_200: {sma200_nan_count} (expected 199)",
+        )
+    except Exception as e:
+        check(
+            "SMA(200) has exactly 199 NaN rows (audit download check)",
+            False,
+            f"Audit could not reload {audit_ticker}: {e}",
+        )
 
     # ── (e) MultiIndex sorted, no duplicates ───────────────────────────────
     check(
@@ -833,11 +911,11 @@ def run_data_integrity_audit(df: pd.DataFrame) -> bool:
         f"Duplicate count: {dup_count}",
     )
 
-    # ── (f) Correct number of tickers ──────────────────────────────────────
+    # ── (f) Valid number of tickers ────────────────────────────────────────
     n_tickers = df.index.get_level_values("ticker").nunique()
     check(
-        "All 7 tickers present",
-        n_tickers == 7,
+        "At least 1 ticker present",
+        n_tickers > 0,
         f"Found tickers: {df.index.get_level_values('ticker').unique().tolist()}",
     )
 
@@ -852,19 +930,19 @@ def run_data_integrity_audit(df: pd.DataFrame) -> bool:
     # ── (h) No future leakage in return_1d (spot-check) ────────────────────
     # return_1d should be past return (t-1 → t), NOT future return.
     # Verify by checking it equals pct_change(1) with NO shift.
-    for ticker in ["AAPL"]:
-        tk_df = df.xs(ticker, level="ticker").sort_index()
-        close = tk_df["Close"]
-        expected_ret1d = close.pct_change(1)
-        actual_ret1d = tk_df["return_1d"]
-        valid = ~(expected_ret1d.isna() | actual_ret1d.isna())
-        ret_match = np.allclose(
-            expected_ret1d[valid].values, actual_ret1d[valid].values, atol=1e-8
-        )
+    sample_ticker = df.index.get_level_values("ticker").unique()[0]
+    tk_df = df.xs(sample_ticker, level="ticker").sort_index()
+    close = tk_df["Close"]
+    expected_ret1d = close.pct_change(1)
+    actual_ret1d = tk_df["return_1d"]
+    valid = ~(expected_ret1d.isna() | actual_ret1d.isna())
+    ret_match = np.allclose(
+        expected_ret1d[valid].values, actual_ret1d[valid].values, atol=1e-8
+    )
     check(
         "return_1d is strictly backward (t-1 → t, no forward shift)",
         ret_match,
-        "Verified for AAPL",
+        f"Verified for {sample_ticker}",
     )
 
     # ── (i) price_to_SMA200 ≥ 0 (Close/SMA200 ratio sanity) ────────────────
