@@ -80,6 +80,12 @@ Execute the entire data ingestion, calibration, and backtesting pipeline determi
 python scripts/run_experiments.py
 ```
 
+For NASDAQ-100 parquet data (external dataset):
+
+```bash
+python scripts/run_experiments.py --data-path data/nasdaq100_prices.parquet --use-cache
+```
+
 Expected runtime on modern hardware is between 30 and 90 minutes. 
 The script automatically builds stateful `.parquet` checkpoints directly in `results/predictions/` after each successfully tested walk-forward fold. If the execution is manually interrupted, subsequent executions will instantly reload the validation cache and resume processing at the next structural fold boundary.
 
