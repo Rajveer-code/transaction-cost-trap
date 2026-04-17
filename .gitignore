@@ -1,0 +1,44 @@
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# ── Virtual environments ─────────────────────────────────────────────────────
+.env
+.venv
+env/
+venv/
+
+# ── Intermediate / generated data (not version-controlled) ───────────────────
+data/raw/
+data/combined/
+data/extended/
+results/predictions/
+results/predictions_ensemble.csv
+
+# ── Training artifacts ───────────────────────────────────────────────────────
+catboost_info/
+*.pkl
+*.pt
+*.pth
+*.ckpt
+
+# ── IDE / OS ─────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.DS_Store
+Thumbs.db
+nul
+
+# ── Jupyter ───────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ── Claude Code internals (not part of project) ──────────────────────────────
+.claude/
+research-workspace/
+unpacked/
+build_final_manuscript.py
+run_experiments_patched.py
