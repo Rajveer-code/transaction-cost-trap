@@ -19,6 +19,16 @@ data/extended/
 results/predictions/
 results/predictions_ensemble.csv
 
+# ── Robustness analysis cache files (large; regenerated on demand) ────────────
+results/robustness/**/*.parquet
+results/robustness/**/*.json
+src/results/
+
+# ── Duplicate script copies (canonical location: scripts/robustness/) ─────────
+src/robustness_01_expanded_universe.py
+src/robustness_02_shap_analysis.py
+src/robustness_03_04_05_dm_vix_bootstrap.py
+
 # ── Training artifacts ───────────────────────────────────────────────────────
 catboost_info/
 *.pkl

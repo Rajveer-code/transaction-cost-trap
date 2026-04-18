@@ -1,0 +1,10 @@
+Strategy_1,Strategy_2,n,mean_loss_diff,dm_stat_hln,p_value,significant,result
+TopK1,Equal_Weight,1512,0.000193,13.2914,0.0,True,r2 BETTER
+TopK1,BuyHold_SPY,1512,0.000233,16.8789,0.0,True,r2 BETTER
+TopK1,Momentum_Top1,1512,2.8e-05,1.6178,0.1059,False,NOT SIG.
+TopK1,TopK2,1512,4.7e-05,2.8761,0.0041,True,r2 BETTER
+TopK1,TopK3,1512,7.6e-05,4.7268,0.0,True,r2 BETTER
+TopK1,Random_Top1,1512,8e-06,0.4234,0.6721,False,NOT SIG.
+TopK1,Threshold_P60,1512,0.000254,18.8623,0.0,True,r2 BETTER
+TopK1,Baseline_P50,1512,0.000197,13.9593,0.0,True,r2 BETTER
+Random_Top1,Equal_Weight,1512,0.000185,14.1837,0.0,True,r2 BETTER
