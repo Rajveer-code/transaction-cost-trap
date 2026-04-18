@@ -1,0 +1,3 @@
+Universe,Mean IC,IC Std Dev,ICIR,T-statistic,p-value,N (trading days),Gate Open Folds,Result
+N=30 (Paper),-0.0005106436251795,0.2204,-0.0023166391784127,-0.09,0.4641173030977516,1512,0,IC gate CLOSED (signal absent)
+N=100 (Robustness),-0.00619,0.153166,-0.040412,-1.622703,0.947569,1512,0,IC gate CLOSED (signal absent)
