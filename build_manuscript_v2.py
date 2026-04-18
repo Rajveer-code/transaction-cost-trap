@@ -573,7 +573,9 @@ r = cap2_p.add_run("Table 2.")
 set_run_font(r, size_pt=9.5, bold=True)
 r2 = cap2_p.add_run(" Walk-forward fold structure (all 12 folds). Training window expands by six months "
                      "per fold. Calibration window is the last 20% of each training period, reserved "
-                     "for isotonic probability calibration. Test windows are each six months "
+                     "for isotonic probability calibration; calibration set size therefore ranges from "
+                     "approximately 150 trading days (Fold 1) to approximately 420 trading days (Fold 12) "
+                     "as the expanding training window grows. Test windows are each six months "
                      "(126 trading days). A 2-calendar-day embargo separates training end from test start.")
 set_run_font(r2, size_pt=9.5)
 
@@ -1042,9 +1044,9 @@ add_body(doc,
     space_after=6)
 
 add_body(doc,
-    "TopK1 vs Random Top-1: DM = 0.42, p = 0.672 (not significant). The ML conviction "
-    "ranking produces daily returns statistically indistinguishable from random stock "
-    "selection at daily frequency. All remaining comparisons (TopK1 vs Equal-Weight, "
+    "The key comparison — TopK1 against Random Top-1 — yields DM = 0.42 (p = 0.672), "
+    "indicating that the ML conviction ranking produces daily returns statistically "
+    "indistinguishable from random stock selection. All remaining comparisons (TopK1 vs Equal-Weight, "
     "vs SPY Buy & Hold, vs TopK2, TopK3, Threshold P60, and Baseline P50) are highly "
     "significant in the expected direction — TopK1 is measurably worse than any sensible "
     "diversified alternative.",
@@ -1123,7 +1125,8 @@ add_body(doc,
     space_after=8)
 
 add_body(doc,
-    "All 12 fold-level 95% CIs span zero (ci_excludes_zero = False for every fold). "
+    "All 12 fold-level 95% CIs span zero — no fold's confidence interval excludes zero — "
+    "confirming the null IC signal finding under inference robust to autocorrelation. "
     "The widest CI is [−0.064, +0.031] for Fold 6, and the narrowest is [−0.011, +0.058] "
     "for Fold 3 — which is the fold with the highest point-estimate IC (+0.023). Even the "
     "most optimistic fold's upper CI of +0.058 is economically negligible. Bootstrap "
