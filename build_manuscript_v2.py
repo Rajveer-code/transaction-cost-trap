@@ -248,7 +248,7 @@ abstract_text = (
     "discrimination — calibration quality is orthogonal to predictive content. "
     "Five robustness checks confirm the null: expanding the universe to 100 stocks, "
     "Diebold-Mariano predictive accuracy tests, VIX-regime-conditioned IC analysis, "
-    "block bootstrap confidence intervals, and gradient-based feature attribution. "
+    "block bootstrap confidence intervals, and SHAP-based feature attribution. "
     "We interpret the gate closing as a correct decision rather than a failure, "
     "providing principled empirical evidence of signal absence in an efficient "
     "large-cap market segment."
@@ -278,11 +278,13 @@ add_hr(doc)
 add_heading(doc, "1. Introduction", level=1)
 
 add_body(doc,
-    "Can a well-built machine learning model beat an equal-weight index of mega-cap "
-    "technology stocks over six years? On daily OHLCV data alone, our answer is no — "
-    "and we think the machinery we built to answer that question is the contribution. "
-    "The IC gate mechanism catches when a model has nothing to say and keeps it quiet. "
-    "Over 1,512 consecutive out-of-sample trading days, the gate never opened.",
+    "Whether a well-designed machine learning ensemble can generate exploitable "
+    "cross-sectional predictability in large-cap NASDAQ equities from daily OHLCV data "
+    "alone is the question this paper addresses. We find that it cannot. The central "
+    "methodological contribution is an Information Coefficient (IC) gate — a statistical "
+    "mechanism that blocks position-taking when the cross-sectional ranking signal is absent "
+    "— applied within a 12-fold expanding walk-forward framework. Across 1,512 consecutive "
+    "out-of-sample trading days, the gate never opened.",
     space_after=8)
 
 add_body(doc,
@@ -306,7 +308,7 @@ add_body(doc,
     space_after=8)
 
 add_body(doc,
-    "Our contribution is a reproducible IC-gated walk-forward framework with five components. "
+    "The paper's contribution is a reproducible IC-gated walk-forward framework with five components. "
     "An expanding-window walk-forward validator generates 12 non-overlapping test folds with "
     "temporal embargoes. A three-model ensemble — CatBoost, Random Forest, and MLP — produces "
     "probability estimates averaged with equal weight. Isotonic regression calibrates "
@@ -317,9 +319,9 @@ add_body(doc,
     space_after=8)
 
 add_body(doc,
-    "The central finding is negative: across all 12 test folds, the IC gate stays closed. "
-    "The ensemble ranks 30 stocks each day, but those rankings carry no persistent "
-    "cross-sectional information. The TopK1 Sharpe ratio of −0.16 falls well below the "
+    "The central finding is a null result: across all 12 test folds, the IC gate remains "
+    "closed. The ensemble produces daily cross-sectional conviction rankings for 30 stocks, "
+    "but those rankings carry no persistent predictive content. The TopK1 Sharpe ratio of −0.16 falls well below the "
     "equal-weight benchmark Sharpe of 0.96. A permutation test confirms the observed "
     "performance is indistinguishable from random selection (p = 0.742). Monotonically "
     "increasing Sharpe with K — from TopK1 at −0.16 through TopK3 at +0.12 to the "
@@ -332,14 +334,14 @@ add_body(doc,
     "tests confirm TopK1 is statistically indistinguishable from random stock selection "
     "(DM = 0.42, p = 0.67). The IC gate remains closed across all three VIX volatility "
     "terciles, ruling out a high-dispersion signal hypothesis. Block bootstrap confidence "
-    "intervals span zero for all 12 folds. Gradient-based feature attribution shows low "
-    "and unstable feature importance scores across folds (Spearman rank ρ = 0.13–0.40), "
+    "intervals span zero for all 12 folds. SHAP-based feature attribution (TreeExplainer) "
+    "shows low and unstable feature importance scores across folds (Spearman rank ρ = 0.13–0.40), "
     "confirming the model fits noise rather than structure.",
     space_after=8)
 
 add_body(doc,
-    "We position this as a methodologically complete negative result rather than an "
-    "incremental positive claim. The calibration quality — ECE below 0.025 across all "
+    "This paper contributes a methodologically complete negative result to the empirical "
+    "asset pricing literature. The calibration quality — ECE below 0.025 across all "
     "folds — demonstrates the ensemble is well-trained. The null IC is a property of "
     "the signal class (49 backward-looking technical indicators applied to large-cap "
     "NASDAQ stocks), not of the model architecture. This orthogonality between "
@@ -517,27 +519,27 @@ add_heading(doc, "4. Methodology", level=1)
 add_heading(doc, "4.1 Walk-Forward Validation", level=2)
 
 add_body(doc,
-    "We use a 12-fold expanding-window walk-forward design. Each fold trains on all "
-    "data from January 2015 through month T, holds out a six-month calibration window "
-    "immediately after T, and evaluates on the subsequent six-month test window. The "
-    "training window expands by one fold period for each successive fold. Fold 1 tests "
-    "July–December 2017; Fold 12 tests July–December 2024.",
+    "We use a 12-fold expanding-window walk-forward design. The training window expands "
+    "by six months per fold, starting from October 2015. The last 20% of each training "
+    "window is reserved as a calibration set for isotonic probability calibration; the "
+    "remaining 80% trains the base learners. Fold 1 tests October 2018 – April 2019; "
+    "Fold 12 tests April 2024 – October 2024.",
     space_after=8)
 
 add_body(doc,
-    "A 10-trading-day embargo separates each training period from its calibration window, "
-    "and a second embargo separates the calibration window from the test period. The "
-    "calibration window is strictly held out — the isotonic calibrator never observes the "
-    "test-period label distribution before inference. This design prevents any form of "
-    "temporal data leakage while providing a separate distribution for probability "
-    "calibration at each fold.",
+    "A 2-calendar-day embargo separates the end of each training period from the start "
+    "of the corresponding test window. The embargo length matches the 2-day forward shift "
+    "in the target variable (y_t = 1{Close(t+2) > Close(t+1)}), eliminating the subtle "
+    "cross-contamination that would otherwise arise in the final two training rows. The "
+    "calibration subset is never exposed to the test-period label distribution before "
+    "inference, preventing any form of temporal data leakage.",
     space_after=8)
 
 # Table 2: Walk-forward folds
 t2 = doc.add_table(rows=1, cols=4)
 t2.style = "Table Grid"
 t2.alignment = WD_TABLE_ALIGNMENT.CENTER
-for cell, text in zip(t2.rows[0].cells, ["Fold", "Train", "Calibration", "Test"]):
+for cell, text in zip(t2.rows[0].cells, ["Fold", "Training (expanding)", "Cal. Window (last 20%)", "Test (held-out)"]):
     cell.text = ""
     r = cell.paragraphs[0].add_run(text)
     set_run_font(r, size_pt=9, bold=True)
@@ -545,15 +547,23 @@ for cell, text in zip(t2.rows[0].cells, ["Fold", "Train", "Calibration", "Test"]
     r.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
 
 fold_rows = [
-    ("1",  "Jan 2015 – Dec 2016", "Jan 2017 – Jun 2017",  "Jul 2017 – Dec 2017"),
-    ("2",  "Jan 2015 – Jun 2017", "Jul 2017 – Dec 2017",  "Jan 2018 – Jun 2018"),
-    ("...", "...", "...", "..."),
-    ("12", "Jan 2015 – Mar 2024", "Apr 2024 – Jun 2024",  "Jul 2024 – Dec 2024"),
+    ("1",  "Oct 2015 – Oct 2018", "Mar 2018 – Oct 2018",  "Oct 2018 – Apr 2019"),
+    ("2",  "Oct 2015 – Apr 2019", "Aug 2018 – Apr 2019",  "Apr 2019 – Oct 2019"),
+    ("3",  "Oct 2015 – Oct 2019", "Dec 2018 – Oct 2019",  "Oct 2019 – Apr 2020"),
+    ("4",  "Oct 2015 – Apr 2020", "May 2019 – Apr 2020",  "Apr 2020 – Oct 2020"),
+    ("5",  "Oct 2015 – Oct 2020", "Oct 2019 – Oct 2020",  "Oct 2020 – Apr 2021"),
+    ("6",  "Oct 2015 – Apr 2021", "Mar 2020 – Apr 2021",  "Apr 2021 – Oct 2021"),
+    ("7",  "Oct 2015 – Oct 2021", "Aug 2020 – Oct 2021",  "Oct 2021 – Apr 2022"),
+    ("8",  "Oct 2015 – Apr 2022", "Dec 2020 – Apr 2022",  "Apr 2022 – Oct 2022"),
+    ("9",  "Oct 2015 – Oct 2022", "May 2021 – Oct 2022",  "Oct 2022 – Apr 2023"),
+    ("10", "Oct 2015 – Apr 2023", "Oct 2021 – Apr 2023",  "Apr 2023 – Oct 2023"),
+    ("11", "Oct 2015 – Oct 2023", "Mar 2022 – Oct 2023",  "Oct 2023 – Apr 2024"),
+    ("12", "Oct 2015 – Apr 2024", "Aug 2022 – Apr 2024",  "Apr 2024 – Oct 2024"),
 ]
 for i, row_data in enumerate(fold_rows):
     add_table_row(t2, row_data, shaded=(i % 2 == 0), size=9)
 
-set_col_widths(t2, [1.5, 5.5, 5.0, 5.0])
+set_col_widths(t2, [1.0, 4.5, 4.5, 4.5])
 
 cap2_p = doc.add_paragraph()
 cap2_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -561,9 +571,10 @@ cap2_p.paragraph_format.space_before = Pt(4)
 cap2_p.paragraph_format.space_after  = Pt(10)
 r = cap2_p.add_run("Table 2.")
 set_run_font(r, size_pt=9.5, bold=True)
-r2 = cap2_p.add_run(" Walk-forward fold structure. Training window expands; calibration and test "
-                     "windows are each fixed at six months. Embargoes (10 trading days) separate "
-                     "adjacent windows.")
+r2 = cap2_p.add_run(" Walk-forward fold structure (all 12 folds). Training window expands by six months "
+                     "per fold. Calibration window is the last 20% of each training period, reserved "
+                     "for isotonic probability calibration. Test windows are each six months "
+                     "(126 trading days). A 2-calendar-day embargo separates training end from test start.")
 set_run_font(r2, size_pt=9.5)
 
 add_heading(doc, "4.2 Ensemble Model", level=2)
@@ -665,8 +676,9 @@ add_body(doc,
 add_heading(doc, "4.5 Backtesting and Transaction Costs", level=2)
 
 add_body(doc,
-    "Each trading day the gate is open, the strategy takes the K stocks with the highest "
-    "conviction scores as equal-weight long-only positions (short selling is not permitted). "
+    "On each trading day for which the gate is open, the strategy allocates equal weight "
+    "to the K stocks with the highest calibrated conviction scores, with long-only "
+    "positions throughout (short selling is not permitted). "
     "The equal-weight benchmark rebalances monthly to 30 equal positions. Transaction costs "
     "are charged round-trip at the prevailing cost assumption (baseline: 5 bps), applied to "
     "each position change. The backtest is vectorized over the full 1,512-day period using "
@@ -683,8 +695,8 @@ add_heading(doc, "5. Results", level=1)
 add_heading(doc, "5.1 IC Signal: Gate Stays Closed", level=2)
 
 add_body(doc,
-    "Across all 1,512 out-of-sample trading days, the IC gate never opens. The aggregate "
-    "IC statistics paint a clear picture of absent cross-sectional signal:",
+    "Across all 1,512 out-of-sample trading days, the IC gate remains closed in every "
+    "fold. Table 4 reports the aggregate IC statistics:",
     space_after=6)
 
 # Table 4: IC summary
@@ -743,8 +755,8 @@ add_body(doc,
     "Table 5 reports full performance metrics for all strategies. The TopK1 strategy — "
     "the ensemble's highest-conviction single position each day — loses 5.9% annually "
     "with a Sharpe of −0.16 and a maximum drawdown of 67.0%. Random Top-1 performs "
-    "comparably at −4.6% annual return and −0.12 Sharpe, confirming that the model's "
-    "ranking adds nothing to random selection.",
+    "comparably at −4.6% annual return and −0.12 Sharpe, consistent with the model's "
+    "cross-sectional ranking providing no incremental information over random selection.",
     space_after=8)
 
 # Table 5: Strategy comparison
@@ -781,7 +793,9 @@ cap5_p.paragraph_format.space_after  = Pt(10)
 r = cap5_p.add_run("Table 5.")
 set_run_font(r, size_pt=9.5, bold=True)
 r2 = cap5_p.add_run(" Strategy performance summary, October 2018 – October 2024 (1,512 trading days). "
-                     "Transaction cost: 5 bps round-trip. BM = benchmark.")
+                     "Transaction cost: 5 bps round-trip. BM = benchmark. Strategy returns are reported "
+                     "for gate-closed conditions throughout; # Trades reflects position changes that "
+                     "would have occurred unconditionally, shown for diagnostic comparison.")
 set_run_font(r2, size_pt=9.5)
 
 add_figure(doc,
@@ -832,7 +846,8 @@ add_body(doc,
     "orthogonality between calibration quality and IC is a methodologically important "
     "finding: the model correctly estimates the probability of any given stock going up on "
     "a given day (roughly 50%), but cannot distinguish which of the 30 stocks will "
-    "outperform the others. The model is well-trained but the signal class has no content.",
+    "outperform the others. The model is well-specified, but the signal class under study "
+    "contains no exploitable cross-sectional information in this setting.",
     space_after=8)
 
 add_heading(doc, "5.5 Subperiod Analysis", level=2)
@@ -991,12 +1006,12 @@ add_figure(doc,
     "mean IC and near-zero ICIR. The IC gate stays closed in both settings.",
     width_in=5.8)
 
-add_heading(doc, "6.2 Feature Attribution (Gradient Saliency)", level=2)
+add_heading(doc, "6.2 Feature Attribution (SHAP Values)", level=2)
 
 add_body(doc,
-    "We compute gradient-based feature importance scores (equivalent to SHAP magnitude for "
-    "tree models) across the last four test folds (Folds 9–12). Figure 8 shows the top-20 "
-    "features by mean absolute importance. The scores are uniformly small — rolling 63-day "
+    "We compute SHAP values via TreeExplainer (Lundberg and Lee, 2017) for the CatBoost "
+    "component across the last four test folds (Folds 9–12). Figure 8 shows the top-20 "
+    "features by mean absolute SHAP importance. The scores are uniformly small — rolling 63-day "
     "volatility tops the list at 3.4 × 10⁻³, barely above other features.",
     space_after=8)
 
@@ -1011,7 +1026,7 @@ add_body(doc,
 
 add_figure(doc,
     FIG_DIR / "fig08_shap_importance.png",
-    "8. Top-20 features by mean absolute gradient saliency (last 4 folds). Scores are "
+    "8. Top-20 features by mean absolute SHAP value (last 4 folds, TreeExplainer). Scores are "
     "uniformly small with no dominant feature. Inter-fold Spearman rank ρ = 0.13–0.40 "
     "confirms instability consistent with noise-fitting.",
     width_in=5.5)
@@ -1147,8 +1162,10 @@ add_body(doc,
     "Gu et al. (2020) find positive return predictability, but their universe spans the "
     "full US cross-section including small-cap stocks where efficiency is weaker, and their "
     "horizon is monthly rather than daily. The daily, large-cap, single-sector setting we "
-    "study is substantially harder. We do not claim ML models fail in general — we claim "
-    "this signal class, in this universe, at this frequency, finds no signal.",
+    "study is substantially harder. The null result is specific to the signal class tested: "
+    "49 OHLCV-derived technical indicators applied to large-cap NASDAQ stocks at daily "
+    "frequency. It does not generalise to ML models using richer information sets or "
+    "applied to less efficient market segments.",
     space_after=8)
 
 add_heading(doc, "7.2 Calibration Orthogonality", level=2)
@@ -1183,11 +1200,11 @@ add_body(doc,
 
 add_body(doc,
     "A useful property of the gate is that it provides a null result that is itself "
-    "informative. Publishing that the gate stayed closed contributes to the literature by "
-    "establishing a well-controlled negative result with five independent robustness checks. "
-    "Harvey et al. (2016) argue that the multiple-testing problem has produced hundreds of "
-    "false-positive factor discoveries. Publishing negative results with rigorous methodology "
-    "is a partial corrective.",
+    "informative. Establishing a well-controlled negative result with five independent "
+    "robustness checks contributes to the literature directly. "
+    "Harvey et al. (2016) argue that the multiple-testing problem in empirical finance has "
+    "produced a substantial number of false-positive factor discoveries. Rigorous negative "
+    "results provide a partial corrective to this publication bias.",
     space_after=8)
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1294,6 +1311,8 @@ references = [
     "Harvey, D., Leybourne, S., & Newbold, P. (1997). Testing the equality of prediction mean squared errors. International Journal of Forecasting, 13(2), 281–291.",
 
     "Lo, A. W., Mamaysky, H., & Wang, J. (2000). Foundations of technical analysis: Computational algorithms, statistical inference, and empirical implementation. Journal of Finance, 55(4), 1705–1765.",
+
+    "Lundberg, S. M., & Lee, S.-I. (2017). A unified approach to interpreting model predictions. Advances in Neural Information Processing Systems (NeurIPS), 30, 4765–4774.",
 
     "Niculescu-Mizil, A., & Caruana, R. (2005). Predicting good probabilities with supervised learning. Proceedings of the 22nd International Conference on Machine Learning (ICML), 625–632.",
 
