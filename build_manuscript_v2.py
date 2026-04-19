@@ -245,11 +245,12 @@ abstract_text = (
     "(ICIR = \u22120.0023, t = \u22120.09, p = 0.464). The TopK1 strategy achieves a Sharpe "
     "ratio of \u22120.16 versus 0.96 for the equal-weight benchmark. A momentum positive "
     "control (Sharpe 0.57) confirms that cross-sectional structure exists in the universe "
-    "but that the daily IC gate correctly remains closed for both the ML ensemble and "
-    "momentum: momentum's Sharpe advantage comes from multi-week trend persistence, a "
-    "distinct mechanism from daily rank prediction. An ablation study demonstrates that "
-    "the full two-stage gate reduces null false positive rates from 11.8% (naive t-test) "
-    "to 0.0% under an AR(1) null IC process. The ensemble is well-calibrated "
+    "but that the daily IC gate remains closed for both the ML ensemble and momentum "
+    "under a daily cross-sectional IC criterion: momentum's Sharpe advantage is "
+    "attributable to multi-week trend persistence rather than daily cross-sectional "
+    "prediction. An ablation study demonstrates that the full two-stage gate reduces "
+    "empirical false positive rates under a simulated AR(1) null from 11.8% (naive t-test) "
+    "to 0.0%. The ensemble is well-calibrated "
     "(ECE < 0.025 across all 12 folds), establishing that calibration quality and "
     "discriminative content are orthogonal. Five robustness checks confirm the null. "
     "ICGDF is offered as a portable, model-agnostic framework for rigorous pre-deployment "
@@ -290,9 +291,9 @@ add_body(doc,
     "parameter set that performs well historically, with no guarantee of out-of-sample "
     "validity. This paper introduces the IC-Gated Deployment Framework (ICGDF) — a "
     "two-stage statistical gate that prevents a conviction ranking system from deploying "
-    "capital unless cross-sectional predictive content is established under autocorrelation-"
-    "robust inference. The gate closing is not a failure; it is the correct output of a "
-    "functioning filter.",
+    "capital under conditions of statistically unsupported cross-sectional predictability, "
+    "requiring Newey-West HAC-corrected IC significance before any position is taken. "
+    "The gate closing is not a failure; it is the correct output of a functioning filter.",
     space_after=8)
 
 add_body(doc,
@@ -323,9 +324,10 @@ add_body(doc, "This paper makes four contributions:", space_after=4)
 
 contrib_data = [
     ("Contribution 1: IC-Gated Deployment Framework (ICGDF). ",
-     "A portable, two-stage pre-deployment gate combining a Newey-West HAC t-test and a "
-     "permutation test on the out-of-sample IC series. The gate is architecture-agnostic "
-     "and can be incorporated into any walk-forward conviction ranking system."),
+     "A portable, two-stage statistically grounded pre-deployment gate combining a "
+     "Newey-West HAC t-test and a permutation test on the out-of-sample IC series. "
+     "The gate is architecture-agnostic and can be incorporated into any walk-forward "
+     "conviction ranking system."),
     ("Contribution 2: Leakage-free walk-forward protocol. ",
      "A 12-fold expanding-window validation design with temporal embargoes, isotonic "
      "calibration on held-out windows, and strictly causal feature construction, "
@@ -710,7 +712,7 @@ add_body(doc,
     "The ensemble combines three base learners with equal probability averaging. "
     "CatBoost (Prokhorenkova et al., 2018) handles categorical-like feature interactions "
     "without preprocessing and is robust to overfitting through ordered boosting. "
-    "Random Forest provides diversity through bagging and feature subsampling. "
+    "Random Forest provides diversity through bagging and feature subsampling (Breiman, 2001). "
     "A three-layer MLP (256 → 128 → 64 units, dropout 0.3, ReLU activations) captures "
     "shallow non-linear interactions. All three models train independently on each fold's "
     "expanding training window. MLP training uses early stopping on a held-out 15% "
@@ -761,8 +763,8 @@ add_body(doc,
     "Raw ensemble probabilities are calibrated using isotonic regression fitted on the "
     "held-out calibration window from each fold. Isotonic regression is non-parametric "
     "and monotone — it finds the best step-function mapping from raw scores to empirical "
-    "probabilities without imposing a logistic shape. Expected Calibration Error (ECE) "
-    "is computed over 10 equal-width bins:",
+    "probabilities without imposing a logistic shape (Niculescu-Mizil and Caruana, 2005). "
+    "Expected Calibration Error (ECE) is computed over 10 equal-width bins:",
     space_after=4)
 
 add_equation(doc, "ECE = Σₘ (|Bₘ|/n) · |acc(Bₘ) − conf(Bₘ)|", "1")
@@ -1000,8 +1002,9 @@ add_heading(doc, "5.6 Transaction Cost Sensitivity", level=2)
 
 add_body(doc,
     "Even at zero transaction costs, the TopK1 strategy produces a Sharpe of only +0.22 "
-    "— negative returns remain once even the most conservative cost assumption is applied. "
-    "At the baseline of 5 bps, Sharpe drops to −0.16. At 10 bps, it falls to −0.49. "
+    "— far below the equal-weight benchmark Sharpe of 0.96, and turning negative under "
+    "any realistic cost assumption. At the baseline of 5 bps, Sharpe drops to \u22120.16. "
+    "At 10 bps, it falls to \u22120.49. "
     "The TopK1 strategy requires impossibly low costs to break even, confirming that the "
     "performance problem is in the signal, not the cost model.",
     space_after=8)
@@ -1329,9 +1332,9 @@ set_run_font(r10a, size_pt=9.5, bold=True)
 r10b = cap10_p.add_run(
     " IC gate statistics: momentum signal vs ML ensemble baseline. "
     "HAC Newey-West t-test (lag\u00a0=\u00a09) and permutation test (B\u00a0=\u00a01,000) applied "
-    "identically to both signals over the full 1,532-day OOS window. "
-    "The momentum IC is positive but does not meet the daily-frequency significance "
-    "threshold; the ML ensemble IC is near-zero and negative."
+    "identically to both signals over the full 1,512-day OOS window. "
+    "The momentum IC is positive but does not achieve statistical significance under "
+    "HAC-corrected daily inference; the ML ensemble IC is near-zero and negative."
 )
 set_run_font(r10b, size_pt=9.5)
 
@@ -1339,16 +1342,18 @@ add_body(doc,
     "Both signals produce a closed gate, but for qualitatively different reasons. "
     "The ML ensemble mean IC is \u22120.0005 — negative, near-zero, and with HAC t = \u22120.09 "
     "(p = 0.464). There is no directional signal. The momentum IC is directionally "
-    "consistent with the known momentum premium (+0.007, positive), but statistically "
-    "insufficient at daily frequency in a seven-stock universe: the high IC standard "
-    "deviation (0.47 vs 0.22 for ML ensemble) reflects the variance of a cross-sectional "
-    "rank correlation computed over only seven stocks, producing HAC t = +0.60 (p = 0.276). "
-    "This distinction is mechanistically important: the Momentum Top-1 strategy achieves "
-    "an annualised Sharpe ratio of 0.57 (Section 5) not through statistically significant "
-    "day-to-day cross-sectional IC, but through multi-week trend persistence — a distinct "
-    "predictive mechanism that the daily IC test is not designed to detect. The ICGDF gate "
-    "specifically evaluates daily cross-sectional prediction quality; a positive Sharpe "
-    "from trend following does not imply daily IC significance.",
+    "consistent with the known momentum premium (+0.007, positive), but does not achieve "
+    "statistical significance under HAC-corrected daily inference: the high IC standard "
+    "deviation (0.47 vs 0.22 for ML ensemble) reflects the noisier day-to-day variation "
+    "in momentum rank correlations, consistent with momentum's multi-week signal horizon "
+    "producing less stable daily cross-sectional alignment than the ML ensemble's "
+    "probability scores, producing HAC t = +0.60 (p = 0.276). "
+    "This distinction highlights a difference in predictive mechanism: the Momentum Top-1 "
+    "strategy achieves an annualised Sharpe ratio of 0.57 (Section 5) not through "
+    "statistically significant day-to-day cross-sectional IC, but through multi-week trend "
+    "persistence — a distinct predictive mechanism that the daily IC test is not designed "
+    "to detect. The ICGDF gate specifically evaluates daily cross-sectional prediction "
+    "quality; a positive Sharpe from trend following does not imply daily IC significance.",
     space_after=8)
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1421,11 +1426,11 @@ add_body(doc,
     "when IC observations exhibit moderate autocorrelation (\u03c6\u00a0=\u00a00.30). "
     "Adding the HAC correction (variant B) reduces the false positive rate to 7.6%, "
     "still above \u03b1. Full ICGDF, requiring both HAC significance and permutation "
-    "confirmation (a stricter conjunctive test), achieves 0.0% FPR across 500 trials: "
-    "the gate never fires spuriously for pure AR(1) noise. Both components are "
-    "therefore individually necessary — HAC corrects for autocorrelation inflation; "
-    "the permutation test provides distributional robustness that eliminates the "
-    "remaining 2.6 percentage-point excess above \u03b1.",
+    "confirmation (a stricter conjunctive test), achieves 0.0% FPR in the simulated "
+    "setting: the gate never fires spuriously for pure AR(1) noise under these conditions. "
+    "Both components appear necessary under the tested conditions — HAC corrects for "
+    "autocorrelation inflation; the permutation test provides distributional robustness "
+    "that eliminates the remaining 2.6 percentage-point excess above \u03b1.",
     space_after=8)
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1505,7 +1510,7 @@ add_body(doc,
     "which a false positive could plausibly emerge; none does. The combination of a "
     "well-specified framework, a well-trained model (ECE < 0.025), and a well-controlled "
     "null result constitutes a stronger methodological statement than a marginal positive "
-    "finding obtained under weaker experimental design.",
+    "finding obtained under weaker experimental controls.",
     space_after=8)
 
 add_body(doc,
@@ -1551,9 +1556,10 @@ add_body(doc,
     "statistically insufficient at daily frequency. This reveals that the Sharpe advantage "
     "of momentum comes from multi-week trend persistence — a mechanism distinct from "
     "day-to-day cross-sectional rank prediction, which is what the ICGDF gate specifically "
-    "evaluates. The IC test requires mean IC > 0.009 to reject the null at 1,532 daily "
-    "observations; momentum meets this bar directionally but not statistically, whereas "
-    "the ML ensemble IC (\u22120.0005) fails even the directional criterion.",
+    "evaluates. The IC test requires mean IC \u2248 0.009 for significance at N \u2248 1,500 "
+    "observations under HAC variance; momentum meets this bar directionally but not "
+    "statistically, whereas the ML ensemble IC (\u22120.0005) fails even the directional "
+    "criterion.",
     space_after=8)
 
 add_body(doc,
@@ -1611,6 +1617,14 @@ add_body(doc,
     space_after=6)
 
 add_body(doc,
+    "Gate design scope. The IC gate is calibrated for daily cross-sectional prediction "
+    "and may not be appropriate for strategies operating on longer holding periods or "
+    "different prediction targets. Practitioners applying ICGDF to weekly or monthly "
+    "rebalancing strategies should recalibrate the HAC lag parameter and reconsider the "
+    "statistical power requirements accordingly.",
+    space_after=6)
+
+add_body(doc,
     "Computational overhead. The full ICGDF pipeline — including data preparation, "
     "12-fold walk-forward training of the three-model ensemble (CatBoost, Random Forest, "
     "MLP), isotonic calibration, IC gate computation, and permutation tests "
@@ -1630,9 +1644,9 @@ add_heading(doc, "9. Conclusion", level=1)
 
 add_body(doc,
     "This paper introduces the IC-Gated Deployment Framework (ICGDF), a two-stage "
-    "statistical gate that reduces the risk of false discoveries in financial machine "
-    "learning by requiring Newey-West HAC-corrected IC significance before any position "
-    "is taken. ICGDF provides a portable, leakage-free protocol — combining expanding walk-forward "
+    "statistical gate that reduces the risk of false discoveries under standard empirical "
+    "finance testing conditions, requiring Newey-West HAC-corrected IC significance "
+    "before any position is taken. ICGDF provides a portable, leakage-free protocol — combining expanding walk-forward "
     "validation, temporal embargoes, fold-specific isotonic calibration, and a "
     "pre-deployment IC test — that can be incorporated into any conviction ranking "
     "system without modification to the base learner architecture. The framework "
@@ -1701,17 +1715,17 @@ references = [
 
     "Harvey, C. R., Liu, Y., & Zhu, H. (2016). …and the cross-section of expected returns. Review of Financial Studies, 29(1), 5–68.",
 
-    "Jegadeesh, N., & Titman, S. (1993). Returns to buying winners and selling losers: Implications for stock market efficiency. Journal of Finance, 48(1), 65–91.",
-
     "Harvey, D., Leybourne, S., & Newbold, P. (1997). Testing the equality of prediction mean squared errors. International Journal of Forecasting, 13(2), 281–291.",
+
+    "Jegadeesh, N., & Titman, S. (1993). Returns to buying winners and selling losers: Implications for stock market efficiency. Journal of Finance, 48(1), 65–91.",
 
     "Lo, A. W., Mamaysky, H., & Wang, J. (2000). Foundations of technical analysis: Computational algorithms, statistical inference, and empirical implementation. Journal of Finance, 55(4), 1705–1765.",
 
     "Lundberg, S. M., & Lee, S.-I. (2017). A unified approach to interpreting model predictions. Advances in Neural Information Processing Systems (NeurIPS), 30, 4765–4774.",
 
-    "Niculescu-Mizil, A., & Caruana, R. (2005). Predicting good probabilities with supervised learning. Proceedings of the 22nd International Conference on Machine Learning (ICML), 625–632.",
-
     "Newey, W. K., & West, K. D. (1987). A simple, positive semi-definite, heteroskedasticity and autocorrelation consistent covariance matrix. Econometrica, 55(3), 703–708.",
+
+    "Niculescu-Mizil, A., & Caruana, R. (2005). Predicting good probabilities with supervised learning. Proceedings of the 22nd International Conference on Machine Learning (ICML), 625–632.",
 
     "Prokhorenkova, L., Gusev, G., Vorobev, A., Dorogush, A. V., & Gulin, A. (2018). CatBoost: Unbiased boosting with categorical features. Advances in Neural Information Processing Systems (NeurIPS), 31, 6638–6648.",
 
