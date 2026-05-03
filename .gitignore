@@ -54,6 +54,9 @@ build_final_manuscript.py
 run_experiments_patched.py
 transaction-cost-trap/
 
+# ── Draft manuscript (only FINAL version is tracked) ─────────────────────────
+paper/when_the_gate_stays_closed.docx
+
 # ── IDE / OS ─────────────────────────────────────────────────────────────────
 .idea/
 .vscode/
