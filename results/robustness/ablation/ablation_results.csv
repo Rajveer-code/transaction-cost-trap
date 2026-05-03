@@ -1,0 +1,4 @@
+variant,ml_folds_closed,momentum_gate,null_fpr_pct,assessment
+Naive t-test,12,CLOSED,11.8,Inflated type-I error
+HAC t-test only,12,CLOSED,7.6,Partial — no perm. confirm.
+Full ICGDF (paper),12,CLOSED,0.0,Correct (both components)

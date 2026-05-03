@@ -1,0 +1,2 @@
+signal,n_days,mean_ic,ic_std,icir,ar1_coeff,hac_t_stat,hac_p_value,gate_cond_a,perm_p_value,gate_cond_b,gate_open
+Momentum_252d_trailing,1532,0.007049513369089921,0.47473541060806057,0.014849352316189382,-0.046885397561979035,0.5955171782603803,0.2757489099467958,False,0.598,False,False

@@ -1,0 +1,13 @@
+fold,mean_ic,n_days,naive_gate_open,hac_gate_open,full_gate_open,mean_t_naive,mean_t_hac,mean_t_full
+1,-0.00981,126,False,False,False,-0.638,-0.659,-0.659
+2,-0.01251,126,False,False,False,-0.602,-0.646,-0.646
+3,0.02326,126,False,False,False,1.233,1.249,1.249
+4,-0.01436,126,False,False,False,-0.741,-0.794,-0.794
+5,-0.02502,126,False,False,False,-1.273,-1.267,-1.267
+6,-0.01761,126,False,False,False,-0.837,-0.901,-0.901
+7,0.00117,126,False,False,False,0.061,0.067,0.067
+8,0.00046,126,False,False,False,0.024,0.023,0.023
+9,0.00945,126,False,False,False,0.517,0.513,0.513
+10,-0.01756,126,False,False,False,-0.825,-0.86,-0.86
+11,-0.00547,126,False,False,False,-0.257,-0.261,-0.261
+12,0.01038,126,False,False,False,0.521,0.523,0.523

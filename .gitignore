@@ -12,22 +12,19 @@ build/
 env/
 venv/
 
-# ── Intermediate / generated data (not version-controlled) ───────────────────
+# ── Raw / intermediate data (regenerated via scripts) ────────────────────────
 data/raw/
 data/combined/
 data/extended/
-results/predictions/
-results/predictions_ensemble.csv
 
-# ── Robustness analysis cache files (large; regenerated on demand) ────────────
+# ── Robustness cache files (large parquets, regenerated on demand) ────────────
 results/robustness/**/*.parquet
 results/robustness/**/*.json
 src/results/
 
-# ── Duplicate script copies (canonical location: scripts/robustness/) ─────────
-src/robustness_01_expanded_universe.py
-src/robustness_02_shap_analysis.py
-src/robustness_03_04_05_dm_vix_bootstrap.py
+# ── Prediction outputs (large, regenerated from walk_forward.py) ─────────────
+results/predictions/
+results/predictions_ensemble.csv
 
 # ── Training artifacts ───────────────────────────────────────────────────────
 catboost_info/
@@ -35,6 +32,27 @@ catboost_info/
 *.pt
 *.pth
 *.ckpt
+
+# ── Duplicate / legacy copies ─────────────────────────────────────────────────
+src/robustness_01_expanded_universe.py
+src/robustness_02_shap_analysis.py
+src/robustness_03_04_05_dm_vix_bootstrap.py
+
+# ── Development scratch scripts (not part of reproducible pipeline) ───────────
+scripts/build_cover_letter.py
+scripts/gate_opening_analysis.py
+scripts/hac_bandwidth_selection.py
+scripts/power_analysis.py
+scripts/shap_rf_mlp.py
+
+# ── Temp / internal tooling ───────────────────────────────────────────────────
+.claude/
+_msg_filter.py
+research-workspace/
+unpacked/
+build_final_manuscript.py
+run_experiments_patched.py
+transaction-cost-trap/
 
 # ── IDE / OS ─────────────────────────────────────────────────────────────────
 .idea/
@@ -45,10 +63,3 @@ nul
 
 # ── Jupyter ───────────────────────────────────────────────────────────────────
 .ipynb_checkpoints/
-
-# ── Claude Code internals (not part of project) ──────────────────────────────
-.claude/
-research-workspace/
-unpacked/
-build_final_manuscript.py
-run_experiments_patched.py
