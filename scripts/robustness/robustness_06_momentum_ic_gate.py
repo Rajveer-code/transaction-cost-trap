@@ -14,13 +14,12 @@ Universe: Full 30-stock NASDAQ-100 continuous-member universe
           Loaded from data/nasdaq30_prices.parquet (primary source)
 
 Run from repo root:
-    cd C:\\Users\\Asus\\Downloads\\financial-sentiment-nlp\\research_clean
     python scripts/robustness/robustness_06_momentum_ic_gate.py
 
 Outputs:
     results/robustness/momentum_ic/momentum_ic_gate_results.csv
     results/robustness/momentum_ic/daily_ic_series.csv
-    Console: formatted table — COPY and return to Claude to update manuscript.
+    Console: formatted table — copy values into Table 10 of the manuscript.
 
 Dependencies: numpy, pandas, scipy, yfinance (all already installed in venv)
 """
@@ -313,8 +312,8 @@ def main() -> None:
     print(f"\n  [SAVED] {OUT_DIR}/momentum_ic_gate_results.csv")
     print(f"  [SAVED] {OUT_DIR}/daily_ic_series.csv")
     print()
-    print("  *** COPY THIS ENTIRE OUTPUT AND RETURN TO CLAUDE ***")
-    print("  *** (Claude will use it to populate Table 10 in the manuscript) ***")
+    print("  Results saved to results/robustness/momentum_ic/")
+    print("  Use momentum_ic_gate_results.csv to populate Table 10 in the manuscript.")
     print()
 
 
